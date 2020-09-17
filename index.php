@@ -2,13 +2,15 @@
 
     session_start();
 
-    $error = "";    
+    $error = "";  
 
     if (array_key_exists("logout", $_GET)) {
         
         unset($_SESSION);
         setcookie("id", "", time() - 60*60);
         $_COOKIE["id"] = "";  
+        
+        session_destroy();
         
     } else if ((array_key_exists("id", $_SESSION) AND $_SESSION['id']) OR (array_key_exists("id", $_COOKIE) AND $_COOKIE['id'])) {
         
@@ -18,15 +20,7 @@
 
     if (array_key_exists("submit", $_POST)) {
         
-        $link = mysqli_connect("localhost", "cl29-secretdi", "D-fnT^Hbz", "cl29-secretdi");
-        
-        if (mysqli_connect_error()) {
-            
-            die ("Database Connection Error");
-            
-        }
-        
-        
+        include("connection.php");
         
         if (!$_POST['email']) {
             
@@ -67,17 +61,19 @@
                     } else {
 
                         $query = "UPDATE `users` SET password = '".md5(md5(mysqli_insert_id($link)).$_POST['password'])."' WHERE id = ".mysqli_insert_id($link)." LIMIT 1";
-
+                        
+                        $id = mysqli_insert_id($link);
+                        
                         mysqli_query($link, $query);
 
-                        $_SESSION['id'] = mysqli_insert_id($link);
+                        $_SESSION['id'] = $id;
 
                         if ($_POST['stayLoggedIn'] == '1') {
 
-                            setcookie("id", mysqli_insert_id($link), time() + 60*60*24*365);
+                            setcookie("id", $id, time() + 60*60*24*365);
 
                         } 
-
+                            
                         header("Location: loggedinpage.php");
 
                     }
@@ -100,7 +96,7 @@
                             
                             $_SESSION['id'] = $row['id'];
                             
-                            if ($_POST['stayLoggedIn'] == '1') {
+                            if (isset($_POST['stayLoggedIn']) AND $_POST['stayLoggedIn'] == '1') {
 
                                 setcookie("id", $row['id'], time() + 60*60*24*365);
 
@@ -130,32 +126,97 @@
 
 ?>
 
-<div id="error"><?php echo $error; ?></div>
+<?php include("header.php"); ?>
+      
+      <div class="container" id="homePageContainer">
+      
+    <h1>Secret Diary</h1>
+          
+          <p><strong>Store your thoughts permanently and securely.</strong></p>
+          
+          <div id="error"><?php if ($error!="") {
+    echo '<div class="alert alert-danger" role="alert">'.$error.'</div>';
+    
+} ?></div>
 
-<form method="post">
+<form method="post" id = "signUpForm">
+    
+    <p>Interested? Sign up now.</p>
+    
+    <fieldset class="form-group">
 
-    <input type="email" name="email" placeholder="Your Email">
-    
-    <input type="password" name="password" placeholder="Password">
-    
-    <input type="checkbox" name="stayLoggedIn" value=1>
-    
-    <input type="hidden" name="signUp" value="1">
+        <input class="form-control" type="email" name="email" placeholder="Your Email">
         
-    <input type="submit" name="submit" value="Sign Up!">
+    </fieldset>
+    
+    <fieldset class="form-group">
+    
+        <input class="form-control" type="password" name="password" placeholder="Password">
+        
+    </fieldset>
+    
+    <div class="checkbox">
+    
+        <label>
+    
+        <input type="checkbox" name="stayLoggedIn" value=1> Stay logged in
+            
+        </label>
+        
+    </div>
+    
+    <fieldset class="form-group">
+    
+        <input type="hidden" name="signUp" value="1">
+        
+        <input class="btn btn-success" type="submit" name="submit" value="Sign Up!">
+        
+    </fieldset>
+    
+    <p><a class="toggleForms">Log in</a></p>
 
 </form>
 
-<form method="post">
+<form method="post" id = "logInForm">
+    
+    <p>Log in using your username and password.</p>
+    
+    <fieldset class="form-group">
 
-    <input type="email" name="email" placeholder="Your Email">
-    
-    <input type="password" name="password" placeholder="Password">
-    
-    <input type="checkbox" name="stayLoggedIn" value=1>
-    
-    <input type="hidden" name="signUp" value="0">
+        <input class="form-control" type="email" name="email" placeholder="Your Email">
         
-    <input type="submit" name="submit" value="Log In!">
+    </fieldset>
+    
+    <fieldset class="form-group">
+    
+        <input class="form-control"type="password" name="password" placeholder="Password">
+        
+    </fieldset>
+    
+    <div class="checkbox">
+    
+        <label>
+    
+            <input type="checkbox" name="stayLoggedIn" value=1> Stay logged in
+            
+        </label>
+        
+    </div>
+        
+        <input type="hidden" name="signUp" value="0">
+    
+    <fieldset class="form-group">
+        
+        <input class="btn btn-success" type="submit" name="submit" value="Log In!">
+        
+    </fieldset>
+    
+    <p><a class="toggleForms">Sign up</a></p>
 
 </form>
+          
+      </div>
+
+<?php include("footer.php"); ?>
+
+
